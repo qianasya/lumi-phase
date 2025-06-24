@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -75,6 +76,16 @@
       color: #555;
       margin-bottom: 0;
     }
+
+    #musicPlayer {
+      position: fixed;
+      bottom: 1rem;
+      left: 1rem;
+      background: #fff8fb;
+      border-radius: 1rem;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      padding: 1rem;
+    }
   </style>
 </head>
 <body>
@@ -90,6 +101,14 @@
     </div>
     <!-- More journal entries will go here -->
   </main>
+
+  <div id="musicPlayer">
+    <audio controls loop>
+      <source src="https://github.com/qianasya/lumi-doro-assets/raw/refs/heads/main/flaws-and-all.mp3" type="audio/mp3">
+      Your browser does not support the audio element.
+    </audio>
+    <p style="font-size: 0.8rem; color: #888">Now playing: Flaws and All 🌊</p>
+  </div>
 
   <script>
     const moonPhases = [
