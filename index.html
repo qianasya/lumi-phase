@@ -4,253 +4,188 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Lumi-Phase</title>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Quicksand&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display&family=Quicksand:wght@400;600&display=swap" rel="stylesheet">
   <style>
     body {
       margin: 0;
       font-family: 'Quicksand', sans-serif;
       background: linear-gradient(to bottom, #fceef5, #dceefc);
-      color: #444;
-      padding: 1rem;
+      color: #333;
     }
     header {
       text-align: center;
+      padding: 1rem;
+    }
+    h1 {
       font-family: 'Playfair Display', serif;
-      font-size: 2rem;
-      margin-bottom: 1rem;
+      font-size: 2.5rem;
+      color: #ff7fab;
     }
     .calendar {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 2rem;
-    }
-    .month {
-      border: 1px solid #eee;
-      border-radius: 1rem;
-      padding: 1rem;
-      background: rgba(255, 255, 255, 0.8);
-    }
-    .month h2 {
-      text-align: center;
-      font-size: 1.25rem;
-      margin-bottom: 0.5rem;
-    }
-    .days {
-      display: grid;
       grid-template-columns: repeat(7, 1fr);
-      gap: 0.3rem;
+      gap: 0.5rem;
+      padding: 1rem;
+      max-width: 700px;
+      margin: auto;
     }
     .day {
-      padding: 0.5rem;
+      background-color: #fff;
       border-radius: 0.5rem;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      padding: 0.5rem;
       text-align: center;
       cursor: pointer;
     }
     .day.today {
-      background-color: #ffd6e8;
-      font-weight: bold;
-      border: 1px solid #ff8fb0;
+      border: 2px solid #ff7fab;
     }
-    .entry-area {
-      margin-top: 2rem;
-      display: none;
+    .entry-form, .entry-display {
+      max-width: 700px;
+      margin: 1rem auto;
+      background: #fff;
+      padding: 1rem;
+      border-radius: 1rem;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
-    .entry-area.active {
-      display: block;
-    }
-    .entry-area input[type="text"] {
+    textarea, input[type="text"], select {
       width: 100%;
-      font-family: 'Playfair Display', serif;
-      font-size: 1.25rem;
-      margin-bottom: 0.5rem;
-      padding: 0.5rem;
-    }
-    .entry-area textarea {
-      width: 100%;
-      height: 100px;
-      padding: 0.5rem;
-      font-family: 'Quicksand', sans-serif;
-      font-size: 1rem;
-    }
-    .entry-area select,
-    .entry-area button {
       padding: 0.5rem;
       margin-top: 0.5rem;
-      border-radius: 0.5rem;
-      font-family: 'Quicksand', sans-serif;
-    }
-    .moon-phase {
-      text-align: center;
-      margin-top: 2rem;
-      font-style: italic;
-      color: #777;
-    }
-    .entry-log {
-      margin-top: 2rem;
-    }
-    .entry-item {
-      background: #f9f0f4;
-      padding: 1rem;
       margin-bottom: 1rem;
       border-radius: 0.5rem;
+      border: 1px solid #ccc;
+      font-family: 'Quicksand', sans-serif;
     }
-    .entry-item h3 {
-      margin: 0 0 0.5rem 0;
+    button {
+      padding: 0.5rem 1rem;
+      background-color: #ffb3c6;
+      border: none;
+      border-radius: 1rem;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #ff7fab;
+    }
+    .entry h3 {
       font-family: 'Playfair Display', serif;
+      color: #444;
+      margin-bottom: 0.3rem;
     }
-    .entry-item p {
-      margin: 0.3rem 0;
-    }
-    audio {
-      position: fixed;
-      bottom: 10px;
-      right: 10px;
+    .entry p {
+      color: #555;
+      font-size: 0.95rem;
     }
   </style>
 </head>
 <body>
-  <header>Lumi-Phase 📓🌙</header>
+  <header>
+    <h1>Lumi-Phase 🌙</h1>
+  </header>
   <div class="calendar" id="calendar"></div>
-  <div class="entry-area" id="entryArea">
-    <input type="text" id="entryTitle" placeholder="Entry title..." />
-    <textarea id="entryBody" placeholder="Write your thoughts here..."></textarea>
-    <div>
-      <label for="repeat">Repeat:</label>
-      <select id="repeat">
-        <option value="none">None</option>
-        <option value="daily">Daily</option>
-        <option value="weekly">Weekly</option>
-        <option value="monthly">Monthly</option>
-        <option value="yearly">Yearly</option>
-      </select>
-    </div>
-    <button onclick="saveEntry()">Save</button>
+
+  <div class="entry-form">
+    <h2>New Entry for <span id="selectedDate">(Select a date)</span></h2>
+    <input type="text" id="entryTitle" placeholder="Entry Title" />
+    <textarea id="entryBody" rows="4" placeholder="Write your thoughts..."></textarea>
+    <select id="recurrence">
+      <option value="none">No recurrence</option>
+      <option value="daily">Daily</option>
+      <option value="weekly">Weekly</option>
+      <option value="monthly">Monthly</option>
+      <option value="annually">Annually</option>
+    </select>
+    <button onclick="saveEntry()">Save Entry</button>
   </div>
-  <div class="entry-log" id="entryLog"></div>
-  <div class="moon-phase" id="moonPhase">Moon phase loading...</div>
-  <audio controls loop autoplay>
-    <source src="https://github.com/qianasya/lumi-doro-assets/raw/refs/heads/main/flaws-and-all.mp3" type="audio/mp3">
-  </audio>
+
+  <div class="entry-display">
+    <h2>Entries</h2>
+    <div id="entries"></div>
+  </div>
+
   <script>
     const calendarEl = document.getElementById('calendar');
-    const entryArea = document.getElementById('entryArea');
-    const entryLog = document.getElementById('entryLog');
-    const titleEl = document.getElementById('entryTitle');
-    const bodyEl = document.getElementById('entryBody');
-    const repeatEl = document.getElementById('repeat');
-    const today = new Date();
-    const currentYear = today.getFullYear();
+    const entriesEl = document.getElementById('entries');
+    const selectedDateEl = document.getElementById('selectedDate');
+    let selectedDate = new Date().toISOString().split('T')[0];
 
-    let editingIndex = null;
-    let entries = JSON.parse(localStorage.getItem('lumiEntries') || '[]');
+    function generateCalendar(year, month) {
+      calendarEl.innerHTML = '';
+      const date = new Date(year, month, 1);
+      const today = new Date().toISOString().split('T')[0];
 
-    const months = [
-      'January','February','March','April','May','June',
-      'July','August','September','October','November','December'
-    ];
-
-    const daysInMonth = (month, year) => new Date(year, month + 1, 0).getDate();
-
-    function generateCalendar() {
-      months.forEach((month, i) => {
-        const days = daysInMonth(i, currentYear);
-        const monthDiv = document.createElement('div');
-        monthDiv.className = 'month';
-        monthDiv.innerHTML = `<h2>${month}</h2><div class="days"></div>`;
-
-        const daysContainer = monthDiv.querySelector('.days');
-
-        for (let d = 1; d <= days; d++) {
-          const dayDiv = document.createElement('div');
-          dayDiv.className = 'day';
-          dayDiv.textContent = d;
-
-          if (i === today.getMonth() && d === today.getDate()) {
-            dayDiv.classList.add('today');
-          }
-
-          dayDiv.addEventListener('click', () => {
-            entryArea.classList.add('active');
-            titleEl.value = '';
-            bodyEl.value = '';
-            repeatEl.value = 'none';
-            editingIndex = null;
-          });
-
-          daysContainer.appendChild(dayDiv);
-        }
-
-        calendarEl.appendChild(monthDiv);
-      });
-    }
-
-    function renderEntries() {
-      entryLog.innerHTML = '';
-      entries.forEach((entry, index) => {
-        const div = document.createElement('div');
-        div.className = 'entry-item';
-        div.innerHTML = `
-          <h3>${entry.title}</h3>
-          <p>${entry.body}</p>
-          <p><strong>Repeat:</strong> ${entry.repeat}</p>
-          <p><em>Saved on: ${entry.date}</em></p>
-          <button onclick="editEntry(${index})">Edit</button>
-          <button onclick="deleteEntry(${index})">Delete</button>
-        `;
-        entryLog.appendChild(div);
-      });
+      while (date.getMonth() === month) {
+        const day = date.getDate();
+        const iso = date.toISOString().split('T')[0];
+        const dayEl = document.createElement('div');
+        dayEl.className = 'day';
+        if (iso === today) dayEl.classList.add('today');
+        dayEl.innerHTML = `<strong>${day}</strong>`;
+        dayEl.onclick = () => {
+          selectedDate = iso;
+          selectedDateEl.textContent = iso;
+          showEntries();
+        };
+        calendarEl.appendChild(dayEl);
+        date.setDate(day + 1);
+      }
     }
 
     function saveEntry() {
-      const newEntry = {
-        title: titleEl.value,
-        body: bodyEl.value,
-        repeat: repeatEl.value,
-        date: new Date().toLocaleString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
-      };
-      if (editingIndex !== null) {
-        entries[editingIndex] = newEntry;
-      } else {
-        entries.push(newEntry);
-      }
+      const title = document.getElementById('entryTitle').value.trim();
+      const body = document.getElementById('entryBody').value.trim();
+      const recurrence = document.getElementById('recurrence').value;
+      if (!title && !body) return;
+      const entries = JSON.parse(localStorage.getItem('lumiEntries') || '{}');
+      if (!entries[selectedDate]) entries[selectedDate] = [];
+      entries[selectedDate].push({ title, body, recurrence });
       localStorage.setItem('lumiEntries', JSON.stringify(entries));
-      renderEntries();
-      entryArea.classList.remove('active');
+      showEntries();
+      document.getElementById('entryTitle').value = '';
+      document.getElementById('entryBody').value = '';
     }
 
-    function editEntry(index) {
-      const entry = entries[index];
-      titleEl.value = entry.title;
-      bodyEl.value = entry.body;
-      repeatEl.value = entry.repeat;
-      editingIndex = index;
-      entryArea.classList.add('active');
+    function showEntries() {
+      entriesEl.innerHTML = '';
+      const entries = JSON.parse(localStorage.getItem('lumiEntries') || '{}');
+      const list = entries[selectedDate] || [];
+      list.forEach((entry, index) => {
+        const div = document.createElement('div');
+        div.className = 'entry';
+        div.innerHTML = `
+          <h3>${entry.title || '(Untitled)'}</h3>
+          <p>${entry.body}</p>
+          <p><em>${selectedDate} (${entry.recurrence})</em></p>
+          <button onclick="deleteEntry(${index})">Delete</button>
+          <button onclick="editEntry(${index})">Edit</button>
+        `;
+        entriesEl.appendChild(div);
+      });
     }
 
     function deleteEntry(index) {
-      entries.splice(index, 1);
+      const entries = JSON.parse(localStorage.getItem('lumiEntries') || '{}');
+      entries[selectedDate].splice(index, 1);
       localStorage.setItem('lumiEntries', JSON.stringify(entries));
-      renderEntries();
+      showEntries();
     }
 
-    function loadMoonPhase() {
-      const phases = [
-        "🌑 New Moon",
-        "🌒 Waxing Crescent",
-        "🌓 First Quarter",
-        "🌔 Waxing Gibbous",
-        "🌕 Full Moon",
-        "🌖 Waning Gibbous",
-        "🌗 Last Quarter",
-        "🌘 Waning Crescent"
-      ];
-      const phase = phases[Math.floor((today.getDate() % 29.5) / 3.7)];
-      document.getElementById('moonPhase').textContent = `Today’s moon: ${phase}`;
+    function editEntry(index) {
+      const entries = JSON.parse(localStorage.getItem('lumiEntries') || '{}');
+      const entry = entries[selectedDate][index];
+      document.getElementById('entryTitle').value = entry.title;
+      document.getElementById('entryBody').value = entry.body;
+      document.getElementById('recurrence').value = entry.recurrence;
+      entries[selectedDate].splice(index, 1);
+      localStorage.setItem('lumiEntries', JSON.stringify(entries));
+      showEntries();
     }
 
-    generateCalendar();
-    loadMoonPhase();
-    renderEntries();
+    selectedDateEl.textContent = selectedDate;
+    generateCalendar(new Date().getFullYear(), new Date().getMonth());
+    showEntries();
   </script>
 </body>
 </html>
