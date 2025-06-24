@@ -71,6 +71,11 @@
       font-family: 'Quicksand', sans-serif;
       font-size: 1rem;
     }
+    .entry-area select {
+      padding: 0.5rem;
+      margin-top: 0.5rem;
+      border-radius: 0.5rem;
+    }
     .moon-phase {
       text-align: center;
       margin-top: 2rem;
@@ -90,6 +95,16 @@
   <div class="entry-area" id="entryArea">
     <input type="text" id="entryTitle" placeholder="Entry title..." />
     <textarea id="entryBody" placeholder="Write your thoughts here..."></textarea>
+    <div>
+      <label for="repeat">Repeat:</label>
+      <select id="repeat">
+        <option value="none">None</option>
+        <option value="daily">Daily</option>
+        <option value="weekly">Weekly</option>
+        <option value="monthly">Monthly</option>
+        <option value="yearly">Yearly</option>
+      </select>
+    </div>
   </div>
   <div class="moon-phase" id="moonPhase">Moon phase loading...</div>
   <audio controls loop autoplay>
@@ -97,6 +112,7 @@
   </audio>
   <script>
     const calendarEl = document.getElementById('calendar');
+    const entryArea = document.getElementById('entryArea');
     const today = new Date();
     const currentYear = today.getFullYear();
 
@@ -124,6 +140,10 @@
           if (i === today.getMonth() && d === today.getDate()) {
             dayDiv.classList.add('today');
           }
+
+          dayDiv.addEventListener('click', () => {
+            entryArea.classList.add('active');
+          });
 
           daysContainer.appendChild(dayDiv);
         }
