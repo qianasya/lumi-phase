@@ -71,16 +71,34 @@
       font-family: 'Quicksand', sans-serif;
       font-size: 1rem;
     }
-    .entry-area select {
+    .entry-area select,
+    .entry-area button {
       padding: 0.5rem;
       margin-top: 0.5rem;
       border-radius: 0.5rem;
+      font-family: 'Quicksand', sans-serif;
     }
     .moon-phase {
       text-align: center;
       margin-top: 2rem;
       font-style: italic;
       color: #777;
+    }
+    .entry-log {
+      margin-top: 2rem;
+    }
+    .entry-item {
+      background: #f9f0f4;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      border-radius: 0.5rem;
+    }
+    .entry-item h3 {
+      margin: 0 0 0.5rem 0;
+      font-family: 'Playfair Display', serif;
+    }
+    .entry-item p {
+      margin: 0.3rem 0;
     }
     audio {
       position: fixed;
@@ -105,7 +123,9 @@
         <option value="yearly">Yearly</option>
       </select>
     </div>
+    <button onclick="saveEntry()">Save</button>
   </div>
+  <div class="entry-log" id="entryLog"></div>
   <div class="moon-phase" id="moonPhase">Moon phase loading...</div>
   <audio controls loop autoplay>
     <source src="https://github.com/qianasya/lumi-doro-assets/raw/refs/heads/main/flaws-and-all.mp3" type="audio/mp3">
@@ -113,8 +133,15 @@
   <script>
     const calendarEl = document.getElementById('calendar');
     const entryArea = document.getElementById('entryArea');
+    const entryLog = document.getElementById('entryLog');
+    const titleEl = document.getElementById('entryTitle');
+    const bodyEl = document.getElementById('entryBody');
+    const repeatEl = document.getElementById('repeat');
     const today = new Date();
     const currentYear = today.getFullYear();
+
+    let editingIndex = null;
+    let entries = JSON.parse(localStorage.getItem('lumiEntries') || '[]');
 
     const months = [
       'January','February','March','April','May','June',
@@ -143,6 +170,10 @@
 
           dayDiv.addEventListener('click', () => {
             entryArea.classList.add('active');
+            titleEl.value = '';
+            bodyEl.value = '';
+            repeatEl.value = 'none';
+            editingIndex = null;
           });
 
           daysContainer.appendChild(dayDiv);
@@ -150,6 +181,53 @@
 
         calendarEl.appendChild(monthDiv);
       });
+    }
+
+    function renderEntries() {
+      entryLog.innerHTML = '';
+      entries.forEach((entry, index) => {
+        const div = document.createElement('div');
+        div.className = 'entry-item';
+        div.innerHTML = `
+          <h3>${entry.title}</h3>
+          <p>${entry.body}</p>
+          <p><strong>Repeat:</strong> ${entry.repeat}</p>
+          <button onclick="editEntry(${index})">Edit</button>
+          <button onclick="deleteEntry(${index})">Delete</button>
+        `;
+        entryLog.appendChild(div);
+      });
+    }
+
+    function saveEntry() {
+      const newEntry = {
+        title: titleEl.value,
+        body: bodyEl.value,
+        repeat: repeatEl.value
+      };
+      if (editingIndex !== null) {
+        entries[editingIndex] = newEntry;
+      } else {
+        entries.push(newEntry);
+      }
+      localStorage.setItem('lumiEntries', JSON.stringify(entries));
+      renderEntries();
+      entryArea.classList.remove('active');
+    }
+
+    function editEntry(index) {
+      const entry = entries[index];
+      titleEl.value = entry.title;
+      bodyEl.value = entry.body;
+      repeatEl.value = entry.repeat;
+      editingIndex = index;
+      entryArea.classList.add('active');
+    }
+
+    function deleteEntry(index) {
+      entries.splice(index, 1);
+      localStorage.setItem('lumiEntries', JSON.stringify(entries));
+      renderEntries();
     }
 
     function loadMoonPhase() {
@@ -169,6 +247,7 @@
 
     generateCalendar();
     loadMoonPhase();
+    renderEntries();
   </script>
 </body>
 </html>
