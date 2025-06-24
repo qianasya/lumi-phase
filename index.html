@@ -12,7 +12,6 @@
       margin: 0;
       padding: 0;
     }
-
     header {
       display: flex;
       justify-content: space-between;
@@ -21,14 +20,12 @@
       padding: 1rem 2rem;
       box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
     }
-
     h1 {
       font-family: 'Playfair Display', serif;
       font-size: 2rem;
       color: #ff7fab;
       margin: 0;
     }
-
     .moon-phase {
       font-size: 1rem;
       color: #555;
@@ -37,7 +34,6 @@
       gap: 0.5rem;
       position: relative;
     }
-
     .moon-phase:hover::after {
       content: attr(data-tip);
       position: absolute;
@@ -51,32 +47,52 @@
       box-shadow: 0 0 5px rgba(0,0,0,0.1);
       white-space: nowrap;
     }
-
     main {
       padding: 2rem;
     }
-
-    .entry {
+    .calendar {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+    .day {
+      background: #fff;
+      padding: 1rem;
+      border-radius: 0.75rem;
+      box-shadow: 0 0 5px rgba(0,0,0,0.05);
+      text-align: center;
+      cursor: pointer;
+      position: relative;
+    }
+    .day:hover {
+      background-color: #fff0f5;
+    }
+    .event-list {
+      margin-top: 2rem;
+    }
+    .event {
       background: #ffffffcc;
-      padding: 1.5rem;
+      padding: 1rem;
+      margin-bottom: 0.5rem;
       border-radius: 1rem;
-      margin-bottom: 1.5rem;
-      box-shadow: 0 0 10px rgba(0,0,0,0.05);
-    }
-
-    .entry h2 {
-      font-family: 'Playfair Display', serif;
-      color: #333;
-      margin-top: 0;
-    }
-
-    .entry p {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       font-family: 'Quicksand', sans-serif;
-      font-size: 1rem;
-      color: #555;
-      margin-bottom: 0;
     }
-
+    .event button {
+      margin-left: 0.5rem;
+      padding: 0.3rem 0.7rem;
+      border: none;
+      border-radius: 0.5rem;
+      background-color: #ffb3c6;
+      color: white;
+      cursor: pointer;
+    }
+    .event button:hover {
+      background-color: #ff7fab;
+    }
     #musicPlayer {
       position: fixed;
       bottom: 1rem;
@@ -95,11 +111,9 @@
   </header>
 
   <main>
-    <div class="entry">
-      <h2>June 23, 2025</h2>
-      <p>Today I walked under soft light. The sky felt like a lullaby 💭</p>
-    </div>
-    <!-- More journal entries will go here -->
+    <h2 id="monthTitle">June 2025</h2>
+    <div class="calendar" id="calendar"></div>
+    <div class="event-list" id="eventList"></div>
   </main>
 
   <div id="musicPlayer">
@@ -115,11 +129,9 @@
       'New Moon', 'Waxing Crescent', 'First Quarter', 'Waxing Gibbous',
       'Full Moon', 'Waning Gibbous', 'Last Quarter', 'Waning Crescent'
     ];
-
     const moonEmojis = [
       '🌑', '🌒', '🌓', '🌔', '🌕', '🌖', '🌗', '🌘'
     ];
-
     const moonTips = [
       'A time for quiet intentions and inner planting 🌱',
       'Build gentle momentum toward your dreams 🌙',
@@ -130,29 +142,91 @@
       'Re-evaluate and reset 🧘‍♀️',
       'Slow down, rest and renew 💭'
     ];
-
-    function calculateMoonPhase() {
+    const moonData = (() => {
       const today = new Date();
-      const year = today.getFullYear();
-      const month = today.getMonth();
-      const day = today.getDate();
-
       const lp = 2551443;
       const new_moon = new Date(1970, 0, 7, 20, 35, 0);
       const phase = ((today.getTime() - new_moon.getTime()) / 1000) % lp;
       const index = Math.floor((phase / (lp / 8))) % 8;
-
       return {
         emoji: moonEmojis[index],
         phase: moonPhases[index],
         tip: moonTips[index]
       };
+    })();
+    document.getElementById('moonPhase').innerText = `${moonData.emoji} ${moonData.phase}`;
+    document.getElementById('moonPhase').setAttribute('data-tip', moonData.tip);
+
+    const calendar = document.getElementById('calendar');
+    const eventList = document.getElementById('eventList');
+    let events = JSON.parse(localStorage.getItem('lumiEvents')) || {};
+
+    function renderCalendar() {
+      calendar.innerHTML = '';
+      const year = 2025;
+      const month = 5;
+      const date = new Date(year, month);
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const startDay = date.getDay();
+
+      for (let i = 0; i < startDay; i++) {
+        const empty = document.createElement('div');
+        calendar.appendChild(empty);
+      }
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        const div = document.createElement('div');
+        div.className = 'day';
+        div.innerText = day;
+        div.onclick = () => {
+          const title = prompt("Event title:");
+          const recur = prompt("Repeat (none, daily, weekly, monthly, yearly):", "none");
+          if (title) {
+            const key = `${year}-${month+1}-${day}`;
+            if (!events[key]) events[key] = [];
+            events[key].push({ title, recur });
+            localStorage.setItem('lumiEvents', JSON.stringify(events));
+            renderEventList();
+          }
+        };
+        calendar.appendChild(div);
+      }
     }
 
-    const moonData = calculateMoonPhase();
-    const moonEl = document.getElementById('moonPhase');
-    moonEl.innerText = `${moonData.emoji} ${moonData.phase}`;
-    moonEl.setAttribute('data-tip', moonData.tip);
+    function renderEventList() {
+      eventList.innerHTML = '<h3>Event List</h3>';
+      for (const date in events) {
+        events[date].forEach((event, idx) => {
+          const div = document.createElement('div');
+          div.className = 'event';
+          div.innerHTML = `<span>${date}: ${event.title} (${event.recur})</span>` +
+            `<div><button onclick="editEvent('${date}', ${idx})">Edit</button>` +
+            `<button onclick="deleteEvent('${date}', ${idx})">Delete</button></div>`;
+          eventList.appendChild(div);
+        });
+      }
+    }
+
+    function editEvent(date, idx) {
+      const newTitle = prompt("New title:", events[date][idx].title);
+      const newRecur = prompt("New recurrence:", events[date][idx].recur);
+      if (newTitle !== null) {
+        events[date][idx].title = newTitle;
+        events[date][idx].recur = newRecur;
+        localStorage.setItem('lumiEvents', JSON.stringify(events));
+        renderEventList();
+      }
+    }
+
+    function deleteEvent(date, idx) {
+      events[date].splice(idx, 1);
+      if (events[date].length === 0) delete events[date];
+      localStorage.setItem('lumiEvents', JSON.stringify(events));
+      renderEventList();
+    }
+
+    renderCalendar();
+    renderEventList();
   </script>
 </body>
 </html>
