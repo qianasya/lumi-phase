@@ -1,198 +1,197 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Lumi-Phase</title>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display&family=Quicksand:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Quicksand&display=swap" rel="stylesheet">
   <style>
     body {
-      margin: 0;
       font-family: 'Quicksand', sans-serif;
-      background: linear-gradient(to bottom, #fceef5, #dceefc);
-      color: #333;
-    }
-    header {
-      text-align: center;
-      padding: 1rem;
+      background: linear-gradient(to bottom right, #fceef5, #dceefc);
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
     }
     h1 {
       font-family: 'Playfair Display', serif;
-      font-size: 2.5rem;
+      margin: 1rem;
       color: #ff7fab;
     }
-    .calendar {
+    #calendar {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
-      gap: 0.5rem;
-      padding: 1rem;
+      gap: 5px;
       max-width: 700px;
-      margin: auto;
+      width: 100%;
+      margin-bottom: 2rem;
     }
     .day {
-      background-color: #fff;
-      border-radius: 0.5rem;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-      padding: 0.5rem;
+      padding: 10px;
+      background: white;
+      border-radius: 10px;
       text-align: center;
       cursor: pointer;
+      min-height: 60px;
     }
-    .day.today {
+    .day:hover {
+      background: #ffebf0;
+    }
+    .today {
       border: 2px solid #ff7fab;
     }
-    .entry-form, .entry-display {
-      max-width: 700px;
-      margin: 1rem auto;
-      background: #fff;
+    .entry-box {
+      width: 90%;
+      max-width: 600px;
+      background: white;
       padding: 1rem;
-      border-radius: 1rem;
+      border-radius: 10px;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      margin-bottom: 2rem;
     }
-    textarea, input[type="text"], select {
+    input, textarea, select, button {
       width: 100%;
-      padding: 0.5rem;
-      margin-top: 0.5rem;
-      margin-bottom: 1rem;
-      border-radius: 0.5rem;
+      padding: 10px;
+      margin-top: 10px;
+      margin-bottom: 10px;
+      border-radius: 8px;
       border: 1px solid #ccc;
       font-family: 'Quicksand', sans-serif;
     }
-    button {
-      padding: 0.5rem 1rem;
-      background-color: #ffb3c6;
-      border: none;
-      border-radius: 1rem;
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
+    .entry-list {
+      margin-top: 20px;
     }
-    button:hover {
-      background-color: #ff7fab;
+    .entry {
+      background: #fdf0f5;
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 8px;
     }
     .entry h3 {
+      margin: 0;
       font-family: 'Playfair Display', serif;
-      color: #444;
-      margin-bottom: 0.3rem;
     }
     .entry p {
-      color: #555;
-      font-size: 0.95rem;
+      margin: 5px 0;
+    }
+    .entry button {
+      margin-right: 5px;
     }
   </style>
 </head>
 <body>
-  <header>
-    <h1>Lumi-Phase 🌙</h1>
-  </header>
-  <div class="calendar" id="calendar"></div>
-
-  <div class="entry-form">
-    <h2>New Entry for <span id="selectedDate">(Select a date)</span></h2>
-    <input type="text" id="entryTitle" placeholder="Entry Title" />
-    <textarea id="entryBody" rows="4" placeholder="Write your thoughts..."></textarea>
-    <select id="recurrence">
-      <option value="none">No recurrence</option>
+  <h1>Lumi-Phase 🌙</h1>
+  <div id="calendar"></div>
+  <div class="entry-box">
+    <h2>Journal Entry</h2>
+    <input type="text" id="entryTitle" placeholder="Entry title...">
+    <textarea id="entryBody" placeholder="Write your thoughts here..."></textarea>
+    <select id="recurring">
+      <option value="none">No Recurrence</option>
       <option value="daily">Daily</option>
       <option value="weekly">Weekly</option>
       <option value="monthly">Monthly</option>
-      <option value="annually">Annually</option>
+      <option value="yearly">Yearly</option>
     </select>
     <button onclick="saveEntry()">Save Entry</button>
-  </div>
-
-  <div class="entry-display">
-    <h2>Entries</h2>
-    <div id="entries"></div>
+    <div class="entry-list" id="entryList"></div>
   </div>
 
   <script>
     const calendarEl = document.getElementById('calendar');
-    const entriesEl = document.getElementById('entries');
-    const selectedDateEl = document.getElementById('selectedDate');
-    let selectedDate = new Date().toISOString().split('T')[0];
+    const entryList = document.getElementById('entryList');
+    let selectedDate = new Date();
+    let entries = JSON.parse(localStorage.getItem('entries')) || {};
 
     function generateCalendar(year, month) {
       calendarEl.innerHTML = '';
       const firstDay = new Date(year, month, 1);
-      const startDay = firstDay.getDay();
-      const totalDays = new Date(year, month + 1, 0).getDate();
-      const today = new Date().toISOString().split('T')[0];
+      const lastDay = new Date(year, month + 1, 0);
+      const firstWeekDay = firstDay.getDay();
 
-      // Add empty cells for the first row if month doesn't start on Sunday
-      for (let i = 0; i < startDay; i++) {
-        const empty = document.createElement('div');
-        calendarEl.appendChild(empty);
+      const today = new Date();
+
+      // Fill in empty days before the 1st
+      for (let i = 0; i < firstWeekDay; i++) {
+        const emptyCell = document.createElement('div');
+        calendarEl.appendChild(emptyCell);
       }
 
-      for (let day = 1; day <= totalDays; day++) {
+      for (let day = 1; day <= lastDay.getDate(); day++) {
         const date = new Date(year, month, day);
-        const iso = date.toISOString().split('T')[0];
-        const dayEl = document.createElement('div');
-        dayEl.className = 'day';
-        if (iso === today) dayEl.classList.add('today');
-        dayEl.innerHTML = `<strong>${day}</strong>`;
-        dayEl.onclick = () => {
-          selectedDate = iso;
-          selectedDateEl.textContent = iso;
-          showEntries();
+        const cell = document.createElement('div');
+        cell.classList.add('day');
+        if (date.toDateString() === today.toDateString()) cell.classList.add('today');
+        cell.textContent = day;
+        cell.onclick = () => {
+          selectedDate = date;
+          displayEntries();
         };
-        calendarEl.appendChild(dayEl);
+        calendarEl.appendChild(cell);
       }
+    }
+
+    function formatDateKey(date) {
+      return date.toISOString().split('T')[0];
     }
 
     function saveEntry() {
-      const title = document.getElementById('entryTitle').value.trim();
-      const body = document.getElementById('entryBody').value.trim();
-      const recurrence = document.getElementById('recurrence').value;
-      if (!title && !body) return;
-      const entries = JSON.parse(localStorage.getItem('lumiEntries') || '{}');
-      if (!entries[selectedDate]) entries[selectedDate] = [];
-      entries[selectedDate].push({ title, body, recurrence });
-      localStorage.setItem('lumiEntries', JSON.stringify(entries));
-      showEntries();
-      document.getElementById('entryTitle').value = '';
-      document.getElementById('entryBody').value = '';
-    }
-
-    function showEntries() {
-      entriesEl.innerHTML = '';
-      const entries = JSON.parse(localStorage.getItem('lumiEntries') || '{}');
-      const list = entries[selectedDate] || [];
-      list.forEach((entry, index) => {
-        const div = document.createElement('div');
-        div.className = 'entry';
-        div.innerHTML = `
-          <h3>${entry.title || '(Untitled)'}</h3>
-          <p>${entry.body}</p>
-          <p><em>${selectedDate} (${entry.recurrence})</em></p>
-          <button onclick="deleteEntry(${index})">Delete</button>
-          <button onclick="editEntry(${index})">Edit</button>
-        `;
-        entriesEl.appendChild(div);
-      });
+      const title = document.getElementById('entryTitle').value;
+      const body = document.getElementById('entryBody').value;
+      const recurring = document.getElementById('recurring').value;
+      const key = formatDateKey(selectedDate);
+      if (!entries[key]) entries[key] = [];
+      entries[key].push({ title, body, recurring });
+      localStorage.setItem('entries', JSON.stringify(entries));
+      displayEntries();
     }
 
     function deleteEntry(index) {
-      const entries = JSON.parse(localStorage.getItem('lumiEntries') || '{}');
-      entries[selectedDate].splice(index, 1);
-      localStorage.setItem('lumiEntries', JSON.stringify(entries));
-      showEntries();
+      const key = formatDateKey(selectedDate);
+      entries[key].splice(index, 1);
+      localStorage.setItem('entries', JSON.stringify(entries));
+      displayEntries();
     }
 
     function editEntry(index) {
-      const entries = JSON.parse(localStorage.getItem('lumiEntries') || '{}');
-      const entry = entries[selectedDate][index];
+      const key = formatDateKey(selectedDate);
+      const entry = entries[key][index];
       document.getElementById('entryTitle').value = entry.title;
       document.getElementById('entryBody').value = entry.body;
-      document.getElementById('recurrence').value = entry.recurrence;
-      entries[selectedDate].splice(index, 1);
-      localStorage.setItem('lumiEntries', JSON.stringify(entries));
-      showEntries();
+      document.getElementById('recurring').value = entry.recurring;
+      entries[key].splice(index, 1);
+      localStorage.setItem('entries', JSON.stringify(entries));
+      displayEntries();
     }
 
-    selectedDateEl.textContent = selectedDate;
-    const today = new Date();
-    generateCalendar(today.getFullYear(), today.getMonth());
-    showEntries();
+    function displayEntries() {
+      entryList.innerHTML = '';
+      const key = formatDateKey(selectedDate);
+      const dayName = selectedDate.toLocaleDateString('en-US', { weekday: 'long' });
+      const dateHeader = document.createElement('h3');
+      dateHeader.textContent = `${dayName}, ${key}`;
+      entryList.appendChild(dateHeader);
+      if (entries[key]) {
+        entries[key].forEach((entry, index) => {
+          const div = document.createElement('div');
+          div.classList.add('entry');
+          div.innerHTML = `
+            <h3>${entry.title}</h3>
+            <p>${entry.body}</p>
+            <p><em>Recurring: ${entry.recurring}</em></p>
+            <button onclick="editEntry(${index})">Edit</button>
+            <button onclick="deleteEntry(${index})">Delete</button>
+          `;
+          entryList.appendChild(div);
+        });
+      }
+    }
+
+    generateCalendar(selectedDate.getFullYear(), selectedDate.getMonth());
+    displayEntries();
   </script>
 </body>
 </html>
