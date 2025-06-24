@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lumi-Phase</title>
+  <style>
+    body {
+      font-family: 'Quicksand', sans-serif;
+      background: #fdf6f8;
+      color: #444;
+      margin: 0;
+      padding: 2rem;
+    }
+    h1 {
+      text-align: center;
+      color: #ec77ab;
+    }
+    .calendar {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2rem;
+      margin: 2rem 0;
+    }
+    .month {
+      border: 2px solid #ffd6e8;
+      border-radius: 1rem;
+      padding: 1rem;
+      background: #fff0f5;
+    }
+    .month h2 {
+      text-align: center;
+      margin: 0 0 0.5rem;
+      color: #d36c8c;
+    }
+    .days {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 0.25rem;
+      font-size: 0.75rem;
+    }
+    .day {
+      background: #fff;
+      border: 1px solid #ffd6e8;
+      border-radius: 0.5rem;
+      text-align: center;
+      padding: 0.3rem 0;
+      cursor: pointer;
+    }
+    .day:hover {
+      background: #ffe3ed;
+    }
+    .entry-section {
+      margin-top: 2rem;
+      background: #fff8fb;
+      padding: 1rem;
+      border-radius: 1rem;
+      border: 2px dashed #ffcce0;
+    }
+    textarea {
+      width: 100%;
+      height: 80px;
+      margin-bottom: 0.5rem;
+    }
+    select, button {
+      margin-right: 0.5rem;
+    }
+    button {
+      background-color: #ff8fb0;
+      color: white;
+      border: none;
+      border-radius: 1rem;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #ff5c8a;
+    }
+  </style>
+</head>
+<body>
+  <h1>Lumi-Phase 🌙</h1>
+  <div id="calendar" class="calendar"></div>
+  <div class="entry-section" id="entrySection" style="display:none">
+    <h2 id="entryTitle"></h2>
+    <textarea id="entryText" placeholder="Write your thoughts..."></textarea>
+    <select id="recurring">
+      <option value="none">One-time</option>
+      <option value="daily">Daily</option>
+      <option value="weekly">Weekly</option>
+      <option value="monthly">Monthly</option>
+      <option value="annually">Annually</option>
+    </select>
+    <button onclick="saveEntry()">Save</button>
+    <div id="entryList"></div>
+  </div>
+
+  <script>
+    const calendarEl = document.getElementById('calendar');
+    const entrySection = document.getElementById('entrySection');
+    const entryTitle = document.getElementById('entryTitle');
+    const entryText = document.getElementById('entryText');
+    const entryList = document.getElementById('entryList');
+    const recurringSel = document.getElementById('recurring');
+    let currentDateStr = '';
+
+    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+    function generateCalendar(year) {
+      calendarEl.innerHTML = '';
+      for (let m = 0; m < 12; m++) {
+        const date = new Date(year, m);
+        const monthDiv = document.createElement('div');
+        monthDiv.className = 'month';
+        const monthTitle = document.createElement('h2');
+        monthTitle.textContent = monthNames[m];
+        const daysDiv = document.createElement('div');
+        daysDiv.className = 'days';
+
+        const firstDay = new Date(year, m, 1).getDay();
+        const daysInMonth = new Date(year, m + 1, 0).getDate();
+
+        for (let i = 0; i < firstDay; i++) {
+          daysDiv.innerHTML += '<div></div>';
+        }
+
+        for (let d = 1; d <= daysInMonth; d++) {
+          const dayDiv = document.createElement('div');
+          dayDiv.className = 'day';
+          dayDiv.textContent = d;
+          const dateStr = `${year}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+          dayDiv.onclick = () => openEntry(new Date(dateStr));
+
+          // mark recurring events
+          const saved = JSON.parse(localStorage.getItem(dateStr) || '[]');
+          const recurs = JSON.parse(localStorage.getItem('recurringEvents') || '[]');
+          if (saved.length || hasRecurring(recurs, new Date(dateStr))) {
+            dayDiv.style.background = '#ffe0ed';
+          }
+
+          daysDiv.appendChild(dayDiv);
+        }
+
+        monthDiv.appendChild(monthTitle);
+        monthDiv.appendChild(daysDiv);
+        calendarEl.appendChild(monthDiv);
+      }
+    }
+
+    function hasRecurring(events, date) {
+      return events.some(ev => {
+        const [y, m, d] = ev.date.split('-').map(Number);
+        const eventDate = new Date(ev.date);
+        return (
+          (ev.repeat === 'daily') ||
+          (ev.repeat === 'weekly' && eventDate.getDay() === date.getDay()) ||
+          (ev.repeat === 'monthly' && d === date.getDate()) ||
+          (ev.repeat === 'annually' && m === date.getMonth() + 1 && d === date.getDate())
+        );
+      });
+    }
+
+    function openEntry(date) {
+      const dateStr = date.toISOString().split('T')[0];
+      currentDateStr = dateStr;
+      entrySection.style.display = 'block';
+      entryTitle.textContent = `Entry for ${dateStr}`;
+      entryText.value = '';
+      loadEntries(dateStr);
+    }
+
+    function saveEntry() {
+      const text = entryText.value.trim();
+      if (!text) return;
+      let saved = JSON.parse(localStorage.getItem(currentDateStr) || '[]');
+      saved.push(text);
+      localStorage.setItem(currentDateStr, JSON.stringify(saved));
+
+      const repeat = recurringSel.value;
+      if (repeat !== 'none') {
+        let recurs = JSON.parse(localStorage.getItem('recurringEvents') || '[]');
+        recurs.push({ date: currentDateStr, text, repeat });
+        localStorage.setItem('recurringEvents', JSON.stringify(recurs));
+      }
+
+      entryText.value = '';
+      recurringSel.value = 'none';
+      loadEntries(currentDateStr);
+      generateCalendar(new Date().getFullYear());
+    }
+
+    function loadEntries(dateStr) {
+      const saved = JSON.parse(localStorage.getItem(dateStr) || '[]');
+      const recurs = JSON.parse(localStorage.getItem('recurringEvents') || '[]');
+      const date = new Date(dateStr);
+      const matchingRecurs = recurs.filter(ev => hasRecurring([ev], date));
+      const combined = saved.concat(matchingRecurs.map(e => `[Recurring: ${e.repeat}] ${e.text}`));
+
+      entryList.innerHTML = combined.map((e, i) => `
+        <p>– <span id="entry-${i}">${e}</span>
+          <button onclick="editEntry('${dateStr}', ${i})">Edit</button>
+          <button onclick="deleteEntry('${dateStr}', ${i})">Delete</button></p>
+      `).join('');
+    }
+
+    function deleteEntry(date, index) {
+      let saved = JSON.parse(localStorage.getItem(date) || '[]');
+      if (index < saved.length) {
+        saved.splice(index, 1);
+        localStorage.setItem(date, JSON.stringify(saved));
+      } else {
+        let recurs = JSON.parse(localStorage.getItem('recurringEvents') || '[]');
+        const recIndex = index - saved.length;
+        recurs.splice(recIndex, 1);
+        localStorage.setItem('recurringEvents', JSON.stringify(recurs));
+      }
+      openEntry(new Date(date));
+    }
+
+    function editEntry(date, index) {
+      let saved = JSON.parse(localStorage.getItem(date) || '[]');
+      let recurs = JSON.parse(localStorage.getItem('recurringEvents') || '[]');
+      if (index < saved.length) {
+        const newText = prompt("Edit your entry:", saved[index]);
+        if (newText !== null) {
+          saved[index] = newText;
+          localStorage.setItem(date, JSON.stringify(saved));
+        }
+      } else {
+        const recIndex = index - saved.length;
+        const newText = prompt("Edit your recurring entry:", recurs[recIndex].text);
+        if (newText !== null) {
+          recurs[recIndex].text = newText;
+          localStorage.setItem('recurringEvents', JSON.stringify(recurs));
+        }
+      }
+      openEntry(new Date(date));
+    }
+
+    generateCalendar(new Date().getFullYear());
+  </script>
+</body>
+</html>
