@@ -1,232 +1,154 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Lumi-Phase</title>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Quicksand:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Quicksand&display=swap" rel="stylesheet">
   <style>
     body {
-      font-family: 'Quicksand', sans-serif;
-      background: linear-gradient(to bottom, #fceef5, #e8f8fa);
       margin: 0;
-      padding: 0;
+      font-family: 'Quicksand', sans-serif;
+      background: #fffafc;
+      color: #444;
+      padding: 1rem;
     }
     header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background-color: #ffe4f2;
-      padding: 1rem 2rem;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-    }
-    h1 {
+      text-align: center;
       font-family: 'Playfair Display', serif;
       font-size: 2rem;
-      color: #ff7fab;
-      margin: 0;
-    }
-    .moon-phase {
-      font-size: 1rem;
-      color: #555;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      position: relative;
-    }
-    .moon-phase:hover::after {
-      content: attr(data-tip);
-      position: absolute;
-      top: 120%;
-      left: 0;
-      background: #fff0f7;
-      padding: 0.5rem;
-      border-radius: 8px;
-      font-size: 0.8rem;
-      color: #444;
-      box-shadow: 0 0 5px rgba(0,0,0,0.1);
-      white-space: nowrap;
-    }
-    main {
-      padding: 2rem;
+      margin-bottom: 1rem;
     }
     .calendar {
       display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2rem;
+    }
+    .month {
+      border: 1px solid #eee;
+      border-radius: 1rem;
+      padding: 1rem;
+    }
+    .month h2 {
+      text-align: center;
+      font-size: 1.25rem;
+      margin-bottom: 0.5rem;
+    }
+    .days {
+      display: grid;
       grid-template-columns: repeat(7, 1fr);
-      gap: 0.5rem;
-      margin-top: 1rem;
+      gap: 0.3rem;
     }
     .day {
-      background: #fff;
-      padding: 1rem;
-      border-radius: 0.75rem;
-      box-shadow: 0 0 5px rgba(0,0,0,0.05);
+      padding: 0.5rem;
+      border-radius: 0.5rem;
       text-align: center;
       cursor: pointer;
-      position: relative;
     }
-    .day:hover {
-      background-color: #fff0f5;
+    .day.today {
+      background-color: #ffd6e8;
+      font-weight: bold;
+      border: 1px solid #ff8fb0;
     }
-    .event-list {
+    .entry-area {
       margin-top: 2rem;
+      display: none;
     }
-    .event {
-      background: #ffffffcc;
-      padding: 1rem;
+    .entry-area.active {
+      display: block;
+    }
+    .entry-area input[type="text"] {
+      width: 100%;
+      font-family: 'Playfair Display', serif;
+      font-size: 1.25rem;
       margin-bottom: 0.5rem;
-      border-radius: 1rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+      padding: 0.5rem;
+    }
+    .entry-area textarea {
+      width: 100%;
+      height: 100px;
+      padding: 0.5rem;
       font-family: 'Quicksand', sans-serif;
+      font-size: 1rem;
     }
-    .event button {
-      margin-left: 0.5rem;
-      padding: 0.3rem 0.7rem;
-      border: none;
-      border-radius: 0.5rem;
-      background-color: #ffb3c6;
-      color: white;
-      cursor: pointer;
+    .moon-phase {
+      text-align: center;
+      margin-top: 2rem;
+      font-style: italic;
+      color: #777;
     }
-    .event button:hover {
-      background-color: #ff7fab;
-    }
-    #musicPlayer {
+    audio {
       position: fixed;
-      bottom: 1rem;
-      left: 1rem;
-      background: #fff8fb;
-      border-radius: 1rem;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-      padding: 1rem;
+      bottom: 10px;
+      right: 10px;
     }
   </style>
 </head>
 <body>
-  <header>
-    <h1>Lumi-Phase 🌙</h1>
-    <div class="moon-phase" id="moonPhase" data-tip="">🌑 ...</div>
-  </header>
-
-  <main>
-    <h2 id="monthTitle">June 2025</h2>
-    <div class="calendar" id="calendar"></div>
-    <div class="event-list" id="eventList"></div>
-  </main>
-
-  <div id="musicPlayer">
-    <audio controls loop>
-      <source src="https://github.com/qianasya/lumi-doro-assets/raw/refs/heads/main/flaws-and-all.mp3" type="audio/mp3">
-      Your browser does not support the audio element.
-    </audio>
-    <p style="font-size: 0.8rem; color: #888">Now playing: Flaws and All 🌊</p>
+  <header>Lumi-Phase 📓🌙</header>
+  <div class="calendar" id="calendar"></div>
+  <div class="entry-area" id="entryArea">
+    <input type="text" id="entryTitle" placeholder="Entry title..." />
+    <textarea id="entryBody" placeholder="Write your thoughts here..."></textarea>
   </div>
-
+  <div class="moon-phase" id="moonPhase">Moon phase loading...</div>
+  <audio controls loop autoplay>
+    <source src="https://github.com/qianasya/lumi-doro-assets/raw/refs/heads/main/flaws-and-all.mp3" type="audio/mp3">
+  </audio>
   <script>
-    const moonPhases = [
-      'New Moon', 'Waxing Crescent', 'First Quarter', 'Waxing Gibbous',
-      'Full Moon', 'Waning Gibbous', 'Last Quarter', 'Waning Crescent'
+    const calendarEl = document.getElementById('calendar');
+    const today = new Date();
+    const currentYear = today.getFullYear();
+
+    const months = [
+      'January','February','March','April','May','June',
+      'July','August','September','October','November','December'
     ];
-    const moonEmojis = [
-      '🌑', '🌒', '🌓', '🌔', '🌕', '🌖', '🌗', '🌘'
-    ];
-    const moonTips = [
-      'A time for quiet intentions and inner planting 🌱',
-      'Build gentle momentum toward your dreams 🌙',
-      'Make decisions, take action ⚖️',
-      'Stay focused and nurture growth 🌿',
-      'Celebrate, express and manifest 🌕',
-      'Reflect, give thanks, and release 🌾',
-      'Re-evaluate and reset 🧘‍♀️',
-      'Slow down, rest and renew 💭'
-    ];
-    const moonData = (() => {
-      const today = new Date();
-      const lp = 2551443;
-      const new_moon = new Date(1970, 0, 7, 20, 35, 0);
-      const phase = ((today.getTime() - new_moon.getTime()) / 1000) % lp;
-      const index = Math.floor((phase / (lp / 8))) % 8;
-      return {
-        emoji: moonEmojis[index],
-        phase: moonPhases[index],
-        tip: moonTips[index]
-      };
-    })();
-    document.getElementById('moonPhase').innerText = `${moonData.emoji} ${moonData.phase}`;
-    document.getElementById('moonPhase').setAttribute('data-tip', moonData.tip);
 
-    const calendar = document.getElementById('calendar');
-    const eventList = document.getElementById('eventList');
-    let events = JSON.parse(localStorage.getItem('lumiEvents')) || {};
+    const daysInMonth = (month, year) => new Date(year, month + 1, 0).getDate();
 
-    function renderCalendar() {
-      calendar.innerHTML = '';
-      const year = 2025;
-      const month = 5;
-      const date = new Date(year, month);
-      const daysInMonth = new Date(year, month + 1, 0).getDate();
-      const startDay = date.getDay();
+    function generateCalendar() {
+      months.forEach((month, i) => {
+        const days = daysInMonth(i, currentYear);
+        const monthDiv = document.createElement('div');
+        monthDiv.className = 'month';
+        monthDiv.innerHTML = `<h2>${month}</h2><div class="days"></div>`;
 
-      for (let i = 0; i < startDay; i++) {
-        const empty = document.createElement('div');
-        calendar.appendChild(empty);
-      }
+        const daysContainer = monthDiv.querySelector('.days');
 
-      for (let day = 1; day <= daysInMonth; day++) {
-        const div = document.createElement('div');
-        div.className = 'day';
-        div.innerText = day;
-        div.onclick = () => {
-          const title = prompt("Event title:");
-          const recur = prompt("Repeat (none, daily, weekly, monthly, yearly):", "none");
-          if (title) {
-            const key = `${year}-${month+1}-${day}`;
-            if (!events[key]) events[key] = [];
-            events[key].push({ title, recur });
-            localStorage.setItem('lumiEvents', JSON.stringify(events));
-            renderEventList();
+        for (let d = 1; d <= days; d++) {
+          const dayDiv = document.createElement('div');
+          dayDiv.className = 'day';
+          dayDiv.textContent = d;
+
+          if (i === today.getMonth() && d === today.getDate()) {
+            dayDiv.classList.add('today');
           }
-        };
-        calendar.appendChild(div);
-      }
+
+          daysContainer.appendChild(dayDiv);
+        }
+
+        calendarEl.appendChild(monthDiv);
+      });
     }
 
-    function renderEventList() {
-      eventList.innerHTML = '<h3>Event List</h3>';
-      for (const date in events) {
-        events[date].forEach((event, idx) => {
-          const div = document.createElement('div');
-          div.className = 'event';
-          div.innerHTML = `<span>${date}: ${event.title} (${event.recur})</span>` +
-            `<div><button onclick="editEvent('${date}', ${idx})">Edit</button>` +
-            `<button onclick="deleteEvent('${date}', ${idx})">Delete</button></div>`;
-          eventList.appendChild(div);
-        });
-      }
+    function loadMoonPhase() {
+      const phases = [
+        "🌑 New Moon",
+        "🌒 Waxing Crescent",
+        "🌓 First Quarter",
+        "🌔 Waxing Gibbous",
+        "🌕 Full Moon",
+        "🌖 Waning Gibbous",
+        "🌗 Last Quarter",
+        "🌘 Waning Crescent"
+      ];
+      const phase = phases[Math.floor((today.getDate() % 29.5) / 3.7)];
+      document.getElementById('moonPhase').textContent = `Today’s moon: ${phase}`;
     }
 
-    function editEvent(date, idx) {
-      const newTitle = prompt("New title:", events[date][idx].title);
-      const newRecur = prompt("New recurrence:", events[date][idx].recur);
-      if (newTitle !== null) {
-        events[date][idx].title = newTitle;
-        events[date][idx].recur = newRecur;
-        localStorage.setItem('lumiEvents', JSON.stringify(events));
-        renderEventList();
-      }
-    }
-
-    function deleteEvent(date, idx) {
-      events[date].splice(idx, 1);
-      if (events[date].length === 0) delete events[date];
-      localStorage.setItem('lumiEvents', JSON.stringify(events));
-      renderEventList();
-    }
-
-    renderCalendar();
-    renderEventList();
+    generateCalendar();
+    loadMoonPhase();
   </script>
 </body>
 </html>
