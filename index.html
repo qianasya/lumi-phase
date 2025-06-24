@@ -113,11 +113,19 @@
 
     function generateCalendar(year, month) {
       calendarEl.innerHTML = '';
-      const date = new Date(year, month, 1);
+      const firstDay = new Date(year, month, 1);
+      const startDay = firstDay.getDay();
+      const totalDays = new Date(year, month + 1, 0).getDate();
       const today = new Date().toISOString().split('T')[0];
 
-      while (date.getMonth() === month) {
-        const day = date.getDate();
+      // Add empty cells for the first row if month doesn't start on Sunday
+      for (let i = 0; i < startDay; i++) {
+        const empty = document.createElement('div');
+        calendarEl.appendChild(empty);
+      }
+
+      for (let day = 1; day <= totalDays; day++) {
+        const date = new Date(year, month, day);
         const iso = date.toISOString().split('T')[0];
         const dayEl = document.createElement('div');
         dayEl.className = 'day';
@@ -129,7 +137,6 @@
           showEntries();
         };
         calendarEl.appendChild(dayEl);
-        date.setDate(day + 1);
       }
     }
 
@@ -184,7 +191,8 @@
     }
 
     selectedDateEl.textContent = selectedDate;
-    generateCalendar(new Date().getFullYear(), new Date().getMonth());
+    const today = new Date();
+    generateCalendar(today.getFullYear(), today.getMonth());
     showEntries();
   </script>
 </body>
